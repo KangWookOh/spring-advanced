@@ -42,6 +42,8 @@ public class ManagerController {
      * @param bearerToken JWT 토큰 (Authorization 헤더에서 전달)
      * @param todoId 할 일 ID
      * @param managerId 삭제할 담당자 ID
+     * 컨트롤러에서 JWT 처리 로직을 호출하는 대신 사용자 정보는 서비스 레이어에서 처리되도록
+     * 변경ㄹ Authorization 헤더는 그대로 전달하고 토큰 처리오ㅓㅏ 사용자 검증은 ManagerService에서 처리하도록 변경
      */
     @DeleteMapping("/{todoId}/managers/{managerId}")
     public void deleteManager(
