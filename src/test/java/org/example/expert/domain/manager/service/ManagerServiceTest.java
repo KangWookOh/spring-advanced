@@ -45,7 +45,13 @@ class ManagerServiceTest {
         given(todoRepository.findById(todoId)).willReturn(Optional.empty());
 
         // when & then
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> managerService.getManagers(todoId));
+        /*
+        * 중괄호를 사용 명시적으로 블록 정의했고 중괄호로 감싼 표현식이 되며
+        * void 타입이든 반환값이 표현식이든 여러줄에 코드가 포함될수 있다.
+        * */
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+            managerService.getManagers(todoId);
+        });
         assertEquals("Manager not found", exception.getMessage());
     }
 
