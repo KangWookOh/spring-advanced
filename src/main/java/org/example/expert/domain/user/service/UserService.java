@@ -25,11 +25,8 @@ public class UserService {
 
     @Transactional
     public void changePassword(long userId, UserChangePasswordRequest userChangePasswordRequest) {
-        if (userChangePasswordRequest.getNewPassword().length() < 8 ||
-                !userChangePasswordRequest.getNewPassword().matches(".*\\d.*") ||
-                !userChangePasswordRequest.getNewPassword().matches(".*[A-Z].*")) {
-            throw new InvalidRequestException("새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.");
-        }
+        // 새 비밀번호의 유효성을 검증
+        validateNewPassword(userChangePasswordRequest.getNewPassword());
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new InvalidRequestException("User not found"));
@@ -43,5 +40,40 @@ public class UserService {
         }
 
         user.changePassword(passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
+    }
+    
+    private void validateNewPassword(String newPassword) {
+        if (!isPasswordLengthValid(newPassword) ||
+                !containsDigit(newPassword) ||
+                !containsUppercase(newPassword)) {
+            throw new InvalidRequestException("새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.");
+        }
+    }
+
+    /**
+     * 비밀번호 길이가 8자 이상인지 확인
+     * @param password 비밀번호
+     * @return 길이 조건 만족 여부
+     */
+    private boolean isPasswordLengthValid(String password) {
+        return password.length() >= 8;
+    }
+
+    /**
+     * 비밀번호에 숫자가 포함되어 있는지 확인
+     * @param password 비밀번호
+     * @return 숫자 포함 여부
+     */
+    private boolean containsDigit(String password) {
+        return password.matches(".*\\d.*");
+    }
+
+    /**
+     * 비밀번호에 대문자가 포함되어 있는지 확인
+     * @param password 비밀번호
+     * @return 대문자 포함 여부
+     */
+    private boolean containsUppercase(String password) {
+        return password.matches(".*[A-Z].*");
     }
 }
