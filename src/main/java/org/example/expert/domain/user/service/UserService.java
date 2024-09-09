@@ -41,7 +41,7 @@ public class UserService {
 
         user.changePassword(passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
     }
-    
+
     private void validateNewPassword(String newPassword) {
         if (!isPasswordLengthValid(newPassword) ||
                 !containsDigit(newPassword) ||

@@ -36,14 +36,21 @@ public class ManagerController {
         return ResponseEntity.ok(managerService.getManagers(todoId));
     }
 
-    @DeleteMapping("/todos/{todoId}/managers/{managerId}")
+    /**
+     * 담당자 삭제 요청 처리
+     *
+     * @param bearerToken JWT 토큰 (Authorization 헤더에서 전달)
+     * @param todoId 할 일 ID
+     * @param managerId 삭제할 담당자 ID
+     */
+    @DeleteMapping("/{todoId}/managers/{managerId}")
     public void deleteManager(
             @RequestHeader("Authorization") String bearerToken,
             @PathVariable long todoId,
             @PathVariable long managerId
     ) {
-        Claims claims = jwtUtil.extractClaims(bearerToken.substring(7));
-        long userId = Long.parseLong(claims.getSubject());
-        managerService.deleteManager(userId, todoId, managerId);
+        // 서비스 레이얼포 토큰과 ID 정보만 전달 ,JWT 처리는 서비스에서 처리 하게 분리
+        managerService.deleteManager(bearerToken,todoId,managerId);
+
     }
 }

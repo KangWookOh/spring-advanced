@@ -1,6 +1,8 @@
 package org.example.expert.domain.manager.service;
 
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.example.expert.config.JwtUtil;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.manager.dto.request.ManagerSaveRequest;
@@ -28,6 +30,7 @@ public class ManagerService {
     private final ManagerRepository managerRepository;
     private final UserRepository userRepository;
     private final TodoRepository todoRepository;
+    private final JwtUtil jwtUtil;
 
     @Transactional
     public ManagerSaveResponse saveManager(AuthUser authUser, long todoId, ManagerSaveRequest managerSaveRequest) {
@@ -73,25 +76,65 @@ public class ManagerService {
         return dtoList;
     }
 
-    @Transactional
-    public void deleteManager(long userId, long todoId, long managerId) {
+
+    /**
+     * 담당자 삭제 비즈니스 로직
+     * @param todoId 할 일 ID
+     * @param managerId 삭제할 담당자 ID
+     */
+    public void deleteManager(String bearerToken, long todoId, long managerId) {
+
+        String token = jwtUtil.substringToken(bearerToken);
+        Claims claims = jwtUtil.extractClaims(token);
+        Long userId = Long.valueOf(claims.getSubject());
+
+
+        // 사용자 정보 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new InvalidRequestException("User not found"));
+                .orElseThrow(() -> new InvalidRequestException("유저를 찾을 수  없습니다"));
 
+        // 할 일 정보 조회
         Todo todo = todoRepository.findById(todoId)
-                .orElseThrow(() -> new InvalidRequestException("Todo not found"));
+                .orElseThrow(() -> new InvalidRequestException("할일을 찾을 수 없습니다."));
 
+        // 현재 사용자가 해당 할 일의 소유자인지 확인
+        validateTodoOwnership(user, todo);
+
+        // 담당자 정보 조회
+        Manager manager = managerRepository.findById(managerId)
+                .orElseThrow(() -> new InvalidRequestException("매니저를 찾을 수 없습니다."));
+
+        // 할 일에 속한 담당자인지 확인
+        validateManagerAssignment(todo, manager);
+
+        // 담당자 삭제
+        managerRepository.delete(manager);
+    }
+
+    /**
+     * 할 일 소유권 검증
+     * 현재 사용자가 해당 할 일을 소유하고 있는지 확인
+     *
+     * @param user 사용자 정보
+     * @param todo 할 일 정보
+     */
+    private void validateTodoOwnership(User user, Todo todo) {
+        // 할 일이 존재하지 않거나, 할 일의 소유자가 현재 사용자와 다를 경우 예외 처리
         if (todo.getUser() == null || !ObjectUtils.nullSafeEquals(user.getId(), todo.getUser().getId())) {
             throw new InvalidRequestException("해당 일정을 만든 유저가 유효하지 않습니다.");
         }
+    }
 
-        Manager manager = managerRepository.findById(managerId)
-                .orElseThrow(() -> new InvalidRequestException("Manager not found"));
-
+    /**
+     * 담당자가 해당 할 일에 속해 있는지 검증
+     *
+     * @param todo 할 일 정보
+     * @param manager 담당자 정보
+     */
+    private void validateManagerAssignment(Todo todo, Manager manager) {
+        // 해당 담당자가 해당 할 일의 담당자인지 확인
         if (!ObjectUtils.nullSafeEquals(todo.getId(), manager.getTodo().getId())) {
             throw new InvalidRequestException("해당 일정에 등록된 담당자가 아닙니다.");
         }
-
-        managerRepository.delete(manager);
     }
 }
