@@ -32,6 +32,10 @@ public class CommentService {
         Todo todo = todoRepository.findById(todoId).orElseThrow(() ->
                 new InvalidRequestException("Todo not found"));
 
+        if (commentSaveRequest.getContents() == null || commentSaveRequest.getContents().trim().isEmpty()) {
+            throw new InvalidRequestException("댓글 내용은 비어있을 수 없습니다.");
+        }
+
         Comment newComment = new Comment(
                 commentSaveRequest.getContents(),
                 user,
@@ -61,5 +65,21 @@ public class CommentService {
             dtoList.add(dto);
         }
         return dtoList;
+    }
+
+    @Transactional
+    public CommentSaveResponse updateComment(AuthUser authUser, long commentId, CommentSaveRequest commentSaveRequest) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(()-> new InvalidRequestException("Comment not found"));
+        if(!comment.getUser().getId().equals(authUser.getId())) {
+            throw new InvalidRequestException("You are not authorized to update this comment");
+        }
+        comment.update(commentSaveRequest.getContents());
+        Comment updateComment = commentRepository.save(comment);
+        return new CommentSaveResponse(
+                updateComment.getId(),
+                updateComment.getContents(),
+                new UserResponse(updateComment.getUser().getId(), updateComment.getUser().getEmail())
+        );
     }
 }

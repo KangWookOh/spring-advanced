@@ -144,4 +144,7 @@ public class ManagerService {
             throw new InvalidRequestException("해당 일정에 등록된 담당자가 아닙니다.");
         }
     }
+
+
+
 }
