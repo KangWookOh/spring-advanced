@@ -45,4 +45,8 @@ public class Todo extends Timestamped {
         this.title = title;
         this.contents = contents;
     }
+
+    public void addManager(User user) {
+        this.managers.add(new Manager(user, this));
+    }
 }

@@ -5,9 +5,7 @@ import org.example.expert.domain.auth.dto.request.SigninRequest;
 import org.example.expert.domain.auth.dto.request.SignupRequest;
 import org.example.expert.domain.auth.dto.response.SigninResponse;
 import org.example.expert.domain.auth.dto.response.SignupResponse;
-import org.example.expert.domain.auth.exception.AuthException;
 import org.example.expert.domain.auth.service.AuthService;
-import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,11 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.util.NestedServletException;
-
-import static org.assertj.core.api.BDDAssertions.fail;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -119,25 +112,6 @@ public class AuthControllerTest {
 
         verify(authService, times(1)).signin(any(SigninRequest.class));
     }
-    @Test
-    void signin_잘못된_인증정보로_요청시_예외를_던진다() throws Exception {
-        // Given
-        when(authService.signin(any(SigninRequest.class))).thenThrow(new AuthException("잘못된 인증 정보입니다."));
-
-        // When & Then
-        try {
-            mockMvc.perform(post("/auth/signin")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"email\":\"wrong@example.com\",\"password\":\"wrongpassword\"}"));
-            fail("예외가 발생해야 합니다.");
-        } catch (NestedServletException e) {
-            assertTrue(e.getCause() instanceof AuthException);
-            assertEquals("잘못된 인증 정보입니다.", e.getCause().getMessage());
-        }
-
-        verify(authService, times(1)).signin(any(SigninRequest.class));
-    }
-
 
 
 

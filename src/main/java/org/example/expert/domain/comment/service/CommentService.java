@@ -32,6 +32,19 @@ public class CommentService {
         Todo todo = todoRepository.findById(todoId).orElseThrow(() ->
                 new InvalidRequestException("Todo not found"));
 
+
+        // Check if the user is a manager of the todo
+        boolean isManager = todo.getManagers().stream()
+                .anyMatch(manager -> {
+                    System.out.println("Checking manager: " + manager.getUser().getId());
+                    return manager.getUser().getId().equals(user.getId());
+                });
+
+        if (!isManager) {
+            throw new InvalidRequestException("Only the todo manager can add comments");
+        }
+
+
         if (commentSaveRequest.getContents() == null || commentSaveRequest.getContents().trim().isEmpty()) {
             throw new InvalidRequestException("댓글 내용은 비어있을 수 없습니다.");
         }

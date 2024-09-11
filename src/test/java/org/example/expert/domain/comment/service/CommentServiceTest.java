@@ -83,11 +83,12 @@ class CommentServiceTest {
     @Test
     public void comment를_정상적으로_등록한다() {
         // given
-        long todoId = 1;
+        long todoId = 1L;
         CommentSaveRequest request = new CommentSaveRequest("contents");
         AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
         User user = User.fromAuthUser(authUser);
         Todo todo = new Todo("title", "title", "contents", user);
+        todo.addManager(user);  // 사용자를 매니저로 추가
         Comment comment = new Comment(request.getContents(), user, todo);
 
         given(todoRepository.findById(anyLong())).willReturn(Optional.of(todo));
@@ -98,6 +99,8 @@ class CommentServiceTest {
 
         // then
         assertNotNull(result);
+        assertEquals(request.getContents(), result.getContents());
+        assertEquals(authUser.getId(), result.getUser().getId());
     }
     @Test
     public void comment_목록을_정상적으로_조회한다() {
@@ -257,5 +260,28 @@ class CommentServiceTest {
         assertThrows(InvalidRequestException.class, () ->
                 commentService.updateComment(differentUser, commentId, request));
     }
+
+    @Test
+    public void 할일_담당자가_아닌_사용자가_댓글을_등록하려_하면_예외가_발생한다() {
+        // given
+        long todoId = 1L;
+        CommentSaveRequest request = new CommentSaveRequest("Test comment");
+
+        AuthUser managerAuthUser = new AuthUser(1L, "manager@example.com", UserRole.USER);
+        User manager = User.fromAuthUser(managerAuthUser);
+
+        AuthUser nonManagerAuthUser = new AuthUser(2L, "non-manager@example.com", UserRole.USER);
+        User nonManager = User.fromAuthUser(nonManagerAuthUser);
+
+        Todo todo = new Todo("Test Todo", "Test Content", "Sunny", manager);
+        todo.addManager(manager);
+
+        given(todoRepository.findById(todoId)).willReturn(Optional.of(todo));
+
+        // when & then
+        assertThrows(InvalidRequestException.class, () ->
+                commentService.saveComment(nonManagerAuthUser, todoId, request));
+    }
+
 
 }
