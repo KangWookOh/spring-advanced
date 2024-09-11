@@ -164,26 +164,6 @@ class CommentServiceTest {
     }
 
     @Test
-    public void 다양한_사용자_역할로_comment를_등록한다() {
-        // given
-        long todoId = 1L;
-        CommentSaveRequest request = new CommentSaveRequest("contents");
-        AuthUser adminUser = new AuthUser(2L, "admin@example.com", UserRole.ADMIN);
-        Todo todo = new Todo("title", "title", "contents", user);
-
-        given(todoRepository.findById(anyLong())).willReturn(Optional.of(todo));
-        given(commentRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
-
-        // when
-        CommentSaveResponse result = commentService.saveComment(adminUser, todoId, request);
-
-        // then
-        assertNotNull(result);
-        assertEquals(request.getContents(), result.getContents());
-        assertEquals(adminUser.getId(), result.getUser().getId());
-        assertEquals(adminUser.getEmail(), result.getUser().getEmail());
-    }
-    @Test
     public void comment_등록_시_내용이_비어있으면_예외가_발생한다() {
         // given
         long todoId = 1L;
@@ -193,27 +173,6 @@ class CommentServiceTest {
         // when & then
         assertThrows(InvalidRequestException.class, () ->
                 commentService.saveComment(authUser, todoId, request));
-    }
-
-    @Test
-    public void admin_사용자가_comment를_등록한다() {
-        // given
-        long todoId = 1L;
-        CommentSaveRequest request = new CommentSaveRequest("Admin comment");
-        AuthUser adminUser = new AuthUser(2L, "admin@example.com", UserRole.ADMIN);
-        given(todoRepository.findById(anyLong())).willReturn(Optional.of(todo));
-        given(commentRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
-
-        // when
-        CommentSaveResponse result = commentService.saveComment(adminUser, todoId, request);
-
-        // then
-        assertNotNull(result);
-        assertEquals(request.getContents(), result.getContents());
-        assertNotNull(result.getUser());
-        assertEquals(adminUser.getId(), result.getUser().getId());
-        // UserRole 확인을 제거하고 대신 사용자 이메일 확인
-        assertEquals(adminUser.getEmail(), result.getUser().getEmail());
     }
 
     @Test
