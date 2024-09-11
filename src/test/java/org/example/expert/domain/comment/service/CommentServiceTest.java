@@ -258,6 +258,4 @@ class CommentServiceTest {
                 commentService.updateComment(differentUser, commentId, request));
     }
 
-
-
 }

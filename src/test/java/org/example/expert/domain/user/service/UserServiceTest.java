@@ -1,4 +1,4 @@
-package org.example.expert.domain.user;
+package org.example.expert.domain.user.service;
 
 import org.example.expert.config.PasswordEncoder;
 import org.example.expert.domain.common.dto.AuthUser;
@@ -8,7 +8,6 @@ import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.enums.UserRole;
 import org.example.expert.domain.user.repository.UserRepository;
-import org.example.expert.domain.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

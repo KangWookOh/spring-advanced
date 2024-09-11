@@ -1,6 +1,5 @@
 package org.example.expert.domain.manager.controller;
 
-import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.config.JwtUtil;
@@ -28,7 +27,8 @@ public class ManagerController {
             @PathVariable long todoId,
             @Valid @RequestBody ManagerSaveRequest managerSaveRequest
     ) {
-        return ResponseEntity.ok(managerService.saveManager(authUser, todoId, managerSaveRequest));
+        ManagerSaveResponse response = managerService.saveManager(authUser,todoId,managerSaveRequest);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/todos/{todoId}/managers")
