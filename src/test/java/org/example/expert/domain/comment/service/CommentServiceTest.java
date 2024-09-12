@@ -29,8 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
@@ -241,6 +240,38 @@ class CommentServiceTest {
         assertThrows(InvalidRequestException.class, () ->
                 commentService.saveComment(nonManagerAuthUser, todoId, request));
     }
+
+    @Test
+    void updateComment_댓글이_존재하지_않을_때_예외발생() {
+        // given
+        long commentId = 1L;
+        CommentSaveRequest request = new CommentSaveRequest("Updated comment");
+        when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(InvalidRequestException.class, () ->
+                commentService.updateComment(authUser, commentId, request));
+    }
+
+    @Test
+    void updateComment_성공() {
+        // given
+        long commentId = 1L;
+        CommentSaveRequest request = new CommentSaveRequest("Updated comment");
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
+        when(commentRepository.save(any(Comment.class))).thenReturn(comment);
+
+        // when
+        CommentSaveResponse response = commentService.updateComment(authUser, commentId, request);
+
+        // then
+        assertNotNull(response);
+        assertEquals("Updated comment", response.getContents());
+        assertEquals(authUser.getId(), response.getUser().getId());
+        verify(commentRepository).save(any(Comment.class));
+    }
+
+
 
 
 }

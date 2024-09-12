@@ -195,4 +195,76 @@ class TodoControllerTest {
         assertEquals("비", response.getBody().getWeather());
     }
 
+    @Test
+    void 할일_저장_제목_최대_길이_초과() {
+        // Given
+        String longTitle = "a".repeat(101); // 101 characters
+        TodoSaveRequest request = new TodoSaveRequest(longTitle, "테스트 내용");
+        when(todoService.saveTodo(testUser, request)).thenThrow(new IllegalArgumentException("제목은 100자를 초과할 수 없습니다."));
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () -> todoController.saveTodo(testUser, request));
+        verify(todoService).saveTodo(testUser, request);
+    }
+
+    @Test
+    void 할일_저장_내용_최대_길이_초과() {
+        // Given
+        String longContent = "a".repeat(1001); // 1001 characters
+        TodoSaveRequest request = new TodoSaveRequest("테스트 제목", longContent);
+        when(todoService.saveTodo(testUser, request)).thenThrow(new IllegalArgumentException("내용은 1000자를 초과할 수 없습니다."));
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () -> todoController.saveTodo(testUser, request));
+        verify(todoService).saveTodo(testUser, request);
+    }
+
+    @Test
+    void 할일_목록_조회_빈_페이지() {
+        // Given
+        int page = 1;
+        int size = 10;
+        Page<TodoResponse> emptyPage = new PageImpl<>(List.of());
+        when(todoService.getTodos(page, size)).thenReturn(emptyPage);
+
+        // When
+        ResponseEntity<Page<TodoResponse>> response = todoController.getTodos(page, size);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().getContent().isEmpty());
+        assertEquals(0, response.getBody().getTotalElements());
+        verify(todoService).getTodos(page, size);
+    }
+
+    @Test
+    void 할일_목록_조회_페이지_크기_최대값_초과() {
+        // Given
+        int page = 1;
+        int invalidSize = 101; // Assuming 100 is the max allowed size
+        when(todoService.getTodos(page, invalidSize)).thenThrow(new IllegalArgumentException("페이지 크기는 100을 초과할 수 없습니다."));
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () -> todoController.getTodos(page, invalidSize));
+        verify(todoService).getTodos(page, invalidSize);
+    }
+
+    @Test
+    void 할일_저장_날씨_정보_누락() {
+        // Given
+        TodoSaveRequest request = new TodoSaveRequest("테스트 할일", "테스트 내용");
+        TodoSaveResponse responseWithoutWeather = new TodoSaveResponse(1L, "테스트 할일", "테스트 내용", null, testUserResponse);
+        when(todoService.saveTodo(testUser, request)).thenReturn(responseWithoutWeather);
+
+        // When
+        ResponseEntity<TodoSaveResponse> response = todoController.saveTodo(testUser, request);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertNull(response.getBody().getWeather());
+        verify(todoService).saveTodo(testUser, request);
+    }
+
 }
