@@ -327,5 +327,31 @@ class ManagerServiceTest {
                 () -> managerService.deleteManager(token, todoId, managerId));
         assertEquals("해당 일정에 등록된 담당자가 아닙니다.", exception.getMessage());
     }
+    @Test
+    void 일정생성자가_아닌_사용자가_담당자를_등록하려_할때_예외발생() {
+        // given
+        AuthUser authUser = new AuthUser(2L, "different@example.com", UserRole.USER);
+        long todoId = 1L;
+        long managerUserId = 3L;
+
+        User todoOwner = new User("owner@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(todoOwner, "id", 1L);
+
+        Todo todo = new Todo("Test Todo", "Test Content", "Sunny", todoOwner);
+        ReflectionTestUtils.setField(todo, "id", todoId);
+
+        ManagerSaveRequest managerSaveRequest = new ManagerSaveRequest(managerUserId);
+
+        given(todoRepository.findById(todoId)).willReturn(Optional.of(todo));
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                managerService.saveManager(authUser, todoId, managerSaveRequest)
+        );
+
+        assertEquals("담당자를 등록하려고 하는 유저가 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
+    }
+
+
 
 }

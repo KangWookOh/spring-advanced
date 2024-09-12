@@ -33,7 +33,7 @@ public class CommentService {
                 new InvalidRequestException("Todo not found"));
 
 
-        // Check if the user is a manager of the todo
+        // 사용자가 해당 할 일(todo)의 관리자(manager)인지
         boolean isManager = todo.getManagers().stream()
                 .anyMatch(manager -> {
                     System.out.println("Checking manager: " + manager.getUser().getId());
