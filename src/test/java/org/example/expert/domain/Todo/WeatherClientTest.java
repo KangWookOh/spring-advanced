@@ -1,4 +1,5 @@
 package org.example.expert.domain.Todo;
+
 import org.example.expert.client.WeatherClient;
 import org.example.expert.client.dto.WeatherDto;
 import org.example.expert.domain.common.exception.ServerException;
@@ -11,11 +12,9 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;

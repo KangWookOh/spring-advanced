@@ -1,5 +1,4 @@
 package org.example.expert.domain.manager.service;
-
 import org.example.expert.config.JwtUtil;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
@@ -20,13 +19,17 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import io.jsonwebtoken.Claims;
+
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -166,6 +169,163 @@ class ManagerServiceTest {
         assertThrows(InvalidRequestException.class, () ->
                 managerService.saveManager(authUser, todoId, request)
         );
+    }
+
+    @Test
+    void deleteManager_성공() {
+        // given
+        String token = "Bearer validToken";
+        String strippedToken = "validToken";
+        long todoId = 1L;
+        long managerId = 2L;
+        long userId = 3L;
+
+        User user = new User("user@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        Todo todo = new Todo("Test Todo", "Description", "Sunny", user);
+        ReflectionTestUtils.setField(todo, "id", todoId);
+
+        User managerUser = new User("manager@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(managerUser, "id", 4L);
+
+        Manager manager = new Manager(managerUser, todo);
+        ReflectionTestUtils.setField(manager, "id", managerId);
+
+        // Mocking JwtUtil behavior
+        given(jwtUtil.substringToken(token)).willReturn(strippedToken);
+        Claims mockClaims = mock(Claims.class);
+        given(mockClaims.getSubject()).willReturn(String.valueOf(userId));
+        given(jwtUtil.extractClaims(strippedToken)).willReturn(mockClaims);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(todoRepository.findById(todoId)).willReturn(Optional.of(todo));
+        given(managerRepository.findById(managerId)).willReturn(Optional.of(manager));
+
+        // when
+        assertDoesNotThrow(() -> managerService.deleteManager(token, todoId, managerId));
+
+        // then
+        verify(managerRepository).delete(manager);
+    }
+    @Test
+    void deleteManager_할일을_찾을_수_없음() {
+        // given
+        String token = "Bearer validToken";
+        long todoId = 1L;
+        long managerId = 2L;
+        long userId = 3L;
+
+        User user = new User("user@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        Claims claims = Mockito.mock(Claims.class);
+
+        given(jwtUtil.substringToken(token)).willReturn("validToken");
+        given(jwtUtil.extractClaims("validToken")).willReturn(claims);
+        given(claims.getSubject()).willReturn(String.valueOf(userId));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(todoRepository.findById(todoId)).willReturn(Optional.empty());
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> managerService.deleteManager(token, todoId, managerId));
+        assertEquals("할일을 찾을 수 없습니다.", exception.getMessage());
+    }
+    @Test
+    void deleteManager_매니저를_찾을_수_없음() {
+        // given
+        String token = "Bearer validToken";
+        long todoId = 1L;
+        long managerId = 2L;
+        long userId = 3L;
+
+        User user = new User("user@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        Todo todo = new Todo("Test Todo", "Description", "Sunny", user);
+        ReflectionTestUtils.setField(todo, "id", todoId);
+
+        Claims claims = Mockito.mock(Claims.class);
+
+        given(jwtUtil.substringToken(token)).willReturn("validToken");
+        given(jwtUtil.extractClaims("validToken")).willReturn(claims);
+        given(claims.getSubject()).willReturn(String.valueOf(userId));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(todoRepository.findById(todoId)).willReturn(Optional.of(todo));
+        given(managerRepository.findById(managerId)).willReturn(Optional.empty());
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> managerService.deleteManager(token, todoId, managerId));
+        assertEquals("매니저를 찾을 수 없습니다.", exception.getMessage());
+    }
+    @Test
+    void deleteManager_할일_소유자가_아님() {
+        // given
+        String token = "Bearer validToken";
+        long todoId = 1L;
+        long managerId = 2L;
+        long userId = 3L;
+
+        User user = new User("user@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        User todoOwner = new User("owner@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(todoOwner, "id", 4L);
+
+        Todo todo = new Todo("Test Todo", "Description", "Sunny", todoOwner);
+        ReflectionTestUtils.setField(todo, "id", todoId);
+
+        Claims claims = Mockito.mock(Claims.class);
+
+        given(jwtUtil.substringToken(token)).willReturn("validToken");
+        given(jwtUtil.extractClaims("validToken")).willReturn(claims);
+        given(claims.getSubject()).willReturn(String.valueOf(userId));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(todoRepository.findById(todoId)).willReturn(Optional.of(todo));
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> managerService.deleteManager(token, todoId, managerId));
+        assertEquals("해당 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
+    }
+    @Test
+    void deleteManager_매니저가_해당_할일에_속하지_않음() {
+        // given
+        String token = "Bearer validToken";
+        long todoId = 1L;
+        long managerId = 2L;
+        long userId = 3L;
+
+        User user = new User("user@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        Todo todo = new Todo("Test Todo", "Description", "Sunny", user);
+        ReflectionTestUtils.setField(todo, "id", todoId);
+
+        Todo anotherTodo = new Todo("Another Todo", "Description", "Rainy", user);
+        ReflectionTestUtils.setField(anotherTodo, "id", 4L);
+
+        User managerUser = new User("manager@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(managerUser, "id", 5L);
+
+        Manager manager = new Manager(managerUser, anotherTodo);
+        ReflectionTestUtils.setField(manager, "id", managerId);
+
+        Claims claims = Mockito.mock(Claims.class);
+
+        given(jwtUtil.substringToken(token)).willReturn("validToken");
+        given(jwtUtil.extractClaims("validToken")).willReturn(claims);
+        given(claims.getSubject()).willReturn(String.valueOf(userId));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(todoRepository.findById(todoId)).willReturn(Optional.of(todo));
+        given(managerRepository.findById(managerId)).willReturn(Optional.of(manager));
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> managerService.deleteManager(token, todoId, managerId));
+        assertEquals("해당 일정에 등록된 담당자가 아닙니다.", exception.getMessage());
     }
 
 }

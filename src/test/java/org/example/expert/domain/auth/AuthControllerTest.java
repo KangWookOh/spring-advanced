@@ -29,13 +29,12 @@ public class AuthControllerTest {
     private AuthController authController;
 
     private MockMvc mockMvc;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
     }
-
-
 
     @Test
     void signup_유효한_요청시_200과_토큰을_반환한다() throws Exception {

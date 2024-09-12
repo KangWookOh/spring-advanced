@@ -26,6 +26,7 @@ class UserAdminServiceTest {
     @InjectMocks
     private UserAdminService userAdminService;
 
+
     private User testUser;
 
     private UserRoleChangeRequest roleChangeRequest;
