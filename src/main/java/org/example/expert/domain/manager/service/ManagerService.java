@@ -125,7 +125,7 @@ public class ManagerService {
      * @param user 사용자 정보
      * @param todo 할 일 정보
      */
-    private void validateTodoOwnership(User user, Todo todo) {
+    void validateTodoOwnership(User user, Todo todo) {
         // 할 일이 존재하지 않거나, 할 일의 소유자가 현재 사용자와 다를 경우 예외 처리
         if (todo.getUser() == null || !ObjectUtils.nullSafeEquals(user.getId(), todo.getUser().getId())) {
             throw new InvalidRequestException("해당 일정을 만든 유저가 유효하지 않습니다.");

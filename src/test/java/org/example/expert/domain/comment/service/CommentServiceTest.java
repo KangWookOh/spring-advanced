@@ -271,6 +271,17 @@ class CommentServiceTest {
         verify(commentRepository).save(any(Comment.class));
     }
 
+    @Test
+    void 할일이_존재하지_않을_경우_예외_발생() {
+        // given
+        when(todoRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(InvalidRequestException.class, () ->
+                commentService.saveComment(authUser, 1L, new CommentSaveRequest("내용"))
+        );
+    }
+
 
 
 

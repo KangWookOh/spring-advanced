@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
+
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -159,6 +161,7 @@ class UserServiceTest {
         verifyNoInteractions(userRepository);
         verifyNoInteractions(passwordEncoder);
     }
+
     @Test
     void AuthUser로_User_생성_테스트() {
         // Arrange
@@ -184,4 +187,104 @@ class UserServiceTest {
         // Assert
         assertEquals(UserRole.ADMIN, user.getUserRole());
     }
+
+    @Test
+    void 비밀번호_길이가_8자_이상일_때_유효성_검사_성공() {
+        // Arrange
+        String validPassword = "Password123";  // 8자 이상
+        String invalidPassword = "short";      // 8자 미만
+
+        // Act
+        boolean resultValid = userService.isPasswordLengthValid(validPassword);
+        boolean resultInvalid = userService.isPasswordLengthValid(invalidPassword);
+
+        // Assert
+        assertThat(resultValid).isTrue();  // 길이가 8자 이상일 때
+        assertThat(resultInvalid).isFalse();  // 길이가 8자 미만일 때
+    }
+
+    @Test
+    void 비밀번호에_숫자가_포함될_때_유효성_검사_성공() {
+        // Arrange
+        String passwordWithDigit = "Password123";  // 숫자가 포함된 비밀번호
+        String passwordWithoutDigit = "Password";  // 숫자가 없는 비밀번호
+
+        // Act
+        boolean resultWithDigit = userService.containsDigit(passwordWithDigit);
+        boolean resultWithoutDigit = userService.containsDigit(passwordWithoutDigit);
+
+        // Assert
+        assertThat(resultWithDigit).isTrue();  // 숫자가 포함되어 있을 때
+        assertThat(resultWithoutDigit).isFalse();  // 숫자가 포함되지 않았을 때
+    }
+
+    @Test
+    void 비밀번호에_대문자가_포함될_때_유효성_검사_성공() {
+        // Arrange
+        String passwordWithUppercase = "Password123";  // 대문자가 포함된 비밀번호
+        String passwordWithoutUppercase = "password123";  // 대문자가 없는 비밀번호
+
+        // Act
+        boolean resultWithUppercase = userService.containsUppercase(passwordWithUppercase);
+        boolean resultWithoutUppercase = userService.containsUppercase(passwordWithoutUppercase);
+
+        // Assert
+        assertThat(resultWithUppercase).isTrue();  // 대문자가 포함되어 있을 때
+        assertThat(resultWithoutUppercase).isFalse();  // 대문자가 포함되지 않았을 때
+    }
+
+    @Test
+    void 유효한_비밀번호일_때_예외_발생하지_않음() {
+        // Arrange
+        String validPassword = "Password1";  // 유효한 비밀번호
+
+        // Act & Assert
+        assertThatCode(() -> userService.validateNewPassword(validPassword))
+                .doesNotThrowAnyException();  // 예외가 발생하지 않아야 함
+    }
+
+    @Test
+    void 비밀번호가_8자_미만일_때_예외_발생() {
+        // Arrange
+        String shortPassword = "Pass1";  // 8자 미만 비밀번호
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.validateNewPassword(shortPassword))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.");
+    }
+
+    @Test
+    void 비밀번호에_숫자가_포함되지_않았을_때_예외_발생() {
+        // Arrange
+        String passwordWithoutDigit = "Password";  // 숫자가 없는 비밀번호
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.validateNewPassword(passwordWithoutDigit))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.");
+    }
+
+    @Test
+    void 비밀번호에_대문자가_포함되지_않았을_때_예외_발생() {
+        // Arrange
+        String passwordWithoutUppercase = "password1";  // 대문자가 없는 비밀번호
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.validateNewPassword(passwordWithoutUppercase))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.");
+    }
+    @Test
+    void 비밀번호가_모든_조건을_만족하지_않을_때_예외_발생() {
+        // Arrange
+        String invalidPassword = "pass";  // 8자 미만, 숫자 및 대문자 없음
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.validateNewPassword(invalidPassword))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.");
+    }
 }
+
+

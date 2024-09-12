@@ -42,7 +42,7 @@ public class UserService {
         user.changePassword(passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
     }
 
-    private void validateNewPassword(String newPassword) {
+    public void validateNewPassword(String newPassword) {
         if (!isPasswordLengthValid(newPassword) ||
                 !containsDigit(newPassword) ||
                 !containsUppercase(newPassword)) {
@@ -55,7 +55,7 @@ public class UserService {
      * @param password 비밀번호
      * @return 길이 조건 만족 여부
      */
-    private boolean isPasswordLengthValid(String password) {
+    boolean isPasswordLengthValid(String password) {
         return password.length() >= 8;
     }
 
@@ -64,7 +64,7 @@ public class UserService {
      * @param password 비밀번호
      * @return 숫자 포함 여부
      */
-    private boolean containsDigit(String password) {
+    boolean containsDigit(String password) {
         return password.matches(".*\\d.*");
     }
 
@@ -73,7 +73,7 @@ public class UserService {
      * @param password 비밀번호
      * @return 대문자 포함 여부
      */
-    private boolean containsUppercase(String password) {
+     boolean containsUppercase(String password) {
         return password.matches(".*[A-Z].*");
     }
 }

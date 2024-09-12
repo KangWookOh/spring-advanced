@@ -111,4 +111,17 @@ class AuthServiceTest {
         // When & Then
         assertThrows(AuthException.class, () -> authService.signin(request));
     }
+    @Test
+    void 회원가입_이메일이_널일_경우_테스트() {
+        // Given
+        SignupRequest request = new SignupRequest(null, "password", "USER");
+
+        // When & Then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+            authService.signup(request);
+        });
+
+        assertEquals("이미 존재하는 이메일입니다.", exception.getMessage());
+        verify(userRepository, never()).existsByEmail(anyString()); // 이메일 중복 체크 메소드가 호출되지 않았는지 확인
+    }
 }

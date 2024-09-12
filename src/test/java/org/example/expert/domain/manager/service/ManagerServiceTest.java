@@ -20,6 +20,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import io.jsonwebtoken.Claims;
+import org.springframework.util.ObjectUtils;
 
 
 import java.util.List;
@@ -352,6 +353,50 @@ class ManagerServiceTest {
         assertEquals("담당자를 등록하려고 하는 유저가 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
     }
 
+    @Test
+    void 할일_소유권_검증_정상_소유자인_경우_예외가_발생하지_않음() {
+        // given
+        User user = new User("user@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", 1L);
 
+        Todo todo = new Todo("Test Todo", "Description", "Sunny", user);
+        ReflectionTestUtils.setField(todo, "id", 1L);
+
+        // when & then
+        assertDoesNotThrow(() -> managerService.validateTodoOwnership(user, todo));
+    }
+
+    @Test
+    void 할일_소유권_검증_할일의_사용자가_null인_경우_예외_발생() {
+        // given
+        User user = new User("user@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        Todo todo = new Todo("Test Todo", "Description", "Sunny", null);
+        ReflectionTestUtils.setField(todo, "id", 1L);
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> managerService.validateTodoOwnership(user, todo));
+        assertEquals("해당 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
+    }
+
+    @Test
+    void 할일_소유권_검증_다른_사용자인_경우_예외_발생() {
+        // given
+        User user = new User("user@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        User todoOwner = new User("owner@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(todoOwner, "id", 2L);
+
+        Todo todo = new Todo("Test Todo", "Description", "Sunny", todoOwner);
+        ReflectionTestUtils.setField(todo, "id", 1L);
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> managerService.validateTodoOwnership(user, todo));
+        assertEquals("해당 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
+    }
 
 }
